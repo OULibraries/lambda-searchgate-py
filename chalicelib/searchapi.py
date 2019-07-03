@@ -116,7 +116,7 @@ class LibGuidesSilo(Silo):
         my_result.query = query
         my_result.full = f"http://guides.ou.edu/srch.php?q={query}&t=0"
 
-        config = load_config("/searchgate/config")
+        config = load_config("/searchgate/config/")  # trailing slash seems required
 
         response = requests.get(
             "http://lgapi.libapps.com/1.1/guides",
