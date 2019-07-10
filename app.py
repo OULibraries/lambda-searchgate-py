@@ -17,7 +17,7 @@ def search():
         # Which kind of search are we doing?
         target_dispatch = {
             "libguides": searchapi.LibGuidesSilo(),
-            "primo": searchapi.PrimoSilo(),
+            "primo": searchapi.PrimoSilo("articles"),
             "primobooks": searchapi.PrimoSilo("books"),
             "primoshareok": searchapi.PrimoSilo("shareok"),
             "collection": searchapi.PrimoSilo("collection"),

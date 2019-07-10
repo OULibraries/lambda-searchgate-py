@@ -62,10 +62,17 @@ class Result:
         self.source = ""
         self.query = ""
         self.full = ""
-        self.total = ""
+        self.total = 0
         self.plural = []
         self.topLabel = ""
         self.hits = []  # List of tuples describing search results
+
+    def _plural(self):
+
+        return {
+            "end": "" if self.total == 1 else "s",
+            "all": "" if self.total == 1 else "All ",
+        }
 
     def get_data(self):
 
@@ -73,8 +80,8 @@ class Result:
             "source": self.source,
             "query": self.query,
             "full": self.full,
-            "total": self.total,  # TODO, come back and format this equivalent to PHP number_Format
-            "plural": self.plural,
+            "total": f"{self.total:,}",  # TODO, come back and format this equivalent to PHP number_Format
+            "plural": self._plural(),
             "topLabel": self.topLabel,
             "hits": self.hits,
         }
@@ -167,9 +174,10 @@ class LibGuidesSilo(Silo):
 class PrimoSilo(Silo):
     """Simple wrapper for Primo search API."""
 
-    def __init__(self, search_variant="default"):
+    def __init__(self, search_variant="articles"):
         super().__init__()
         self.search_variant = search_variant
+        # TODO there should probably be better choice for  default primo search
 
     def get_result(self, query, limit):
 
@@ -181,20 +189,28 @@ class PrimoSilo(Silo):
         # We do a variety of Primo-based searches
         variant_options = {
             "articles": {
-                "label": "Article",
+                "label": "Articles & More",
+                "source": "articles",
                 "q_exclude": "facet_rtype,exact,books",
                 "url_facet": "rtype,exclude,books",
             },
             "books": {
                 "label": "Book",
-                "source": "primobook",
+                "source": "primobooks",
                 "q_include": "facet_rtype,exact,books",
                 "url_facet": "rtype,include,books",
             },
-            "share": {
+            "shareok": {
                 "label": "SHAREOK Articles",
-                "source": "share",
+                "source": "shareok",
                 "api_scope": "ou_dspace",
+            },
+            # TODO Can I give this a better name, like "primocollection" or whatever
+            "collection": {
+                "label": "Special Collection",
+                "source": "collection",
+                "q_include": "facet_local6,exact,special_collections",
+                "url_facet": "local6,include,special_collections",
             },
         }
         active_variant = variant_options[self.search_variant]
@@ -218,15 +234,15 @@ class PrimoSilo(Silo):
             "addfields": "pnxId",
             "view": "full",
         }
-        response = requests.get(f"{my_primo_host}/primo/v1/pnxs", parans=primo_params)
+        response = requests.get(f"{my_primo_host}/primo/v1/pnxs", params=primo_params)
         json_response = response.json()
 
         my_result.source = active_variant.get("source", "")
 
         full_url = "//ou-primo.hosted.exlibrisgroup.com/primo-explore/search"
         full_url_params = {
-            "query": f"query=any,contains,{query}",
-            "facet": active_variant.get("url_facet"),
+            "query": f"any,contains,{query}",
+            "facet": active_variant.get("url_facet", ""),
             "search_scope": active_variant.get("api_scope", "default_scope"),
             "vid": my_primo_vid,
             "sorby": "rank",
@@ -235,7 +251,7 @@ class PrimoSilo(Silo):
             ("", "", full_url, urllib.parse.urlencode(full_url_params), "")
         )
 
-        my_result.total = len(json_response.get("docs"))
+        my_result.total = json_response["info"]["total"]
 
         for hit in json_response.get("docs"):
 
@@ -261,7 +277,7 @@ class PrimoSilo(Silo):
             return_data["text"] = False
 
             return_data["creator"] = (
-                hit.get("creator", "")
+                hit.get("creator", "No creator inforation available.")
                 if isinstance(hit.get("creator", ""), str)
                 else "; ".join(hit.get("creator"))
             )
