@@ -232,8 +232,21 @@ class PrimoSilo(Silo):
             "addfields": "pnxId",
             "view": "full",
         }
-        response = requests.get(f"{my_primo_host}/primo/v1/pnxs", params=primo_params)
-        json_response = response.json()
+        # response = requests.get(f"{my_primo_host}/primo/v1/pnxs", params=primo_params)
+        # json_response = response.json()
+
+        primo_request_url = urllib.parse.urlunsplit(
+            (
+                "",
+                "",
+                f"{my_primo_host}/primo/v1/pnxs",
+                urllib.parse.urlencode(primo_params),
+                "",
+            )
+        )
+        json_response = None
+        with urllib.request.urlopen(primo_request_url) as response:
+            json_response = json.loads(response.read().decode("utf-8"))
 
         my_result.source = active_variant.get("source", "")
 
@@ -243,7 +256,7 @@ class PrimoSilo(Silo):
             "facet": active_variant.get("url_facet", ""),
             "search_scope": active_variant.get("api_scope", "default_scope"),
             "vid": my_primo_vid,
-            "sorby": "rank",
+            "sortby": "rank",
         }
         my_result.full = urllib.parse.urlunsplit(
             ("", "", full_url, urllib.parse.urlencode(full_url_params), "")
