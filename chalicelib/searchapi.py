@@ -80,7 +80,7 @@ class Result:
             "source": self.source,
             "query": self.query,
             "full": self.full,
-            "total": f"{self.total:,}",  # TODO, come back and format this equivalent to PHP number_Format
+            "total": f"{self.total:,}",  # use ',' to group digits
             "plural": self._plural(),
             "topLabel": self.topLabel,
             "hits": self.hits,
