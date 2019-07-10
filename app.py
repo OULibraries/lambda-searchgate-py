@@ -4,22 +4,35 @@ from chalice import Chalice
 app = Chalice(app_name="searchgate")
 
 
-@app.route("/search")
+@app.route("/")
 def search():
+    """Run a simple search against one of several target APIs"""
 
     try:
+        # TODO sanitize input
+        search_target = app.current_request.query_params.get("t")
+        number_desired = int(app.current_request.query_params.get("n"))
+        needle = app.current_request.query_params.get("q")
 
-        my_api = app.current_request.query_params.get("t")
-        my_limit = app.current_request.query_params.get("q")
-        my_needle = app.current_request.query_params.get("n")
+        # Which kind of search are we doing?
+        target_dispatch = {
+            "libguides": searchapi.LibGuidesSilo(),
+            "primo": searchapi.PrimoSilo(),
+            "primobooks": searchapi.PrimoSilo("books"),
+            "primoshareok": searchapi.PrimoSilo("shareok"),
+            "collection": searchapi.PrimoSilo("collection"),
+            "eresource": None,
+            "site": None,
+            "people": None,
+        }
+        my_api = target_dispatch.get(search_target, None)
 
-        my_search = searchapi.LibGuidesSilo()
-        result = my_search.get_result(my_needle, my_limit)
-
-        return result.get_data()
+        # Do a search
+        result = my_api.get_result(needle, number_desired)
+        return {"data": result.get_data()}
 
     except Exception as error:
-        return repr(error)
+        return {"error": repr(error)}
 
 
 @app.route("/test")
