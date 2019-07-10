@@ -129,16 +129,13 @@ class LibGuidesSilo(Silo):
         my_result.query = query
         my_result.full = f"http://guides.ou.edu/srch.php?q={query}&t=0"
 
-        response = requests.get(
-            "http://lgapi.libapps.com/1.1/guides",
-            params={
-                "key": self.config["/searchgate/config/libguides_key"],
-                "site_id": self.config["/searchgate/config/libguides_siteid"],
-                "sort_by": "relevance",
-                "search_terms": query,
-            },
-        )
-
+        lg_params = {
+            "key": self.config["/searchgate/config/libguides_key"],
+            "site_id": self.config["/searchgate/config/libguides_siteid"],
+            "sort_by": "relevance",
+            "search_terms": query,
+        }
+        response = requests.get("http://lgapi.libapps.com/1.1/guides", params=lg_params)
         json_response = response.json()
 
         my_result.total = len(json_response)
