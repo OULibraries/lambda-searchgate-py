@@ -8,6 +8,7 @@ import pprint
 
 
 def load_config(ssm_parameter_path):
+    """Load our config from the AWS SSM Parameter Store."""
     client = boto3.client("ssm")
 
     config = {}
@@ -55,6 +56,8 @@ def type_to_icon(content_type):
 
 
 class Result:
+    """Defines format for unified search result."""
+
     def __init__(self):
         self.source = ""
         self.query = ""
@@ -94,6 +97,8 @@ class Result:
 
 
 class Silo:
+    """Base class for various search wrappers. """
+
     def __init__(self):
         self.config = load_config(
             "/searchgate/config/"
@@ -107,7 +112,7 @@ class Silo:
 
 
 class LibGuidesSilo(Silo):
-    """Simple wrapper for LibGuides search API"""
+    """Simple wrapper for LibGuides search API."""
 
     def get_result(self, query, limit):
 
@@ -213,10 +218,9 @@ class PrimoSilo(Silo):
             "addfields": "pnxId",
             "view": "full",
         }
-        response = requests.get(f"{my_primo_host}/primo/v1/pnxs", params=primo_params)
+        response = requests.get(f"{my_primo_host}/primo/v1/pnxs", parans=primo_params)
         json_response = response.json()
 
-        # Figure out envelope metadata
         my_result.source = active_variant.get("source", "")
 
         full_url = "//ou-primo.hosted.exlibrisgroup.com/primo-explore/search"
@@ -227,12 +231,11 @@ class PrimoSilo(Silo):
             "vid": my_primo_vid,
             "sorby": "rank",
         }
-
-        my_result.total = len(json_response.get("docs"))
-
         my_result.full = urllib.parse.urlunsplit(
             ("", "", full_url, urllib.parse.urlencode(full_url_params), "")
         )
+
+        my_result.total = len(json_response.get("docs"))
 
         for hit in json_response.get("docs"):
 
