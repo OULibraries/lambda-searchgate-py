@@ -18,8 +18,9 @@ def load_config(ssm_parameter_path):
         )
 
         if "Parameters" in param_details and len(param_details.get("Parameters")) > 0:
+            # load config dict with keys based on path relative to ssm_parameter_path
             config = {
-                param.get("Name"): param.get("Value")
+                param.get("Name")[len(ssm_parameter_path) :]: param.get("Value")
                 for param in param_details.get("Parameters")
             }
 
@@ -130,8 +131,8 @@ class LibGuidesSilo(Silo):
         my_result.full = f"http://guides.ou.edu/srch.php?q={query}&t=0"
 
         lg_params = {
-            "key": self.config["/searchgate/config/libguides_key"],
-            "site_id": self.config["/searchgate/config/libguides_siteid"],
+            "key": self.config["libguides_key"],
+            "site_id": self.config["libguides_siteid"],
             "sort_by": "relevance",
             "search_terms": query,
         }
@@ -179,9 +180,9 @@ class PrimoSilo(Silo):
     def get_result(self, query, limit):
 
         # Wire up credentials
-        my_primo_key = self.config["/searchgate/config/primo_key"]
-        my_primo_vid = self.config["/searchgate/config/primo_vid"]
-        my_primo_host = self.config["/searchgate/config/primo_host"]
+        my_primo_key = self.config["primo_key"]
+        my_primo_vid = self.config["primo_vid"]
+        my_primo_host = self.config["primo_host"]
 
         # We do a variety of Primo-based searches
         variant_options = {
